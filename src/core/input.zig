@@ -5,19 +5,19 @@ const math = @import("math.zig");
 const input = @This();
 
 pub const event = struct {
-    /// The type of an input event.
-    pub const Type = enum {
-        button,
-        cursor,
-        scroll,
-    };
-
     /// A button is pressed or released.
     pub const Button = struct { button: input.Button, is_pressed: bool };
     /// A cursor is moved to a new position.
     pub const Cursor = struct { pos: math.Vec2(f32) };
     /// A wheel or trackpad is scrolled by some amount.
     pub const Scroll = struct { amount: math.Vec2(f32) };
+
+    /// The type of an input event.
+    pub const Type = enum {
+        button,
+        cursor,
+        scroll,
+    };
 
     /// A union of events of any type.
     pub const Any = union(Type) {
@@ -74,6 +74,10 @@ pub const Button = enum(u8) {
     key_7,
     key_8,
     key_9,
+    key_left,
+    key_right,
+    key_up,
+    key_down,
 
     mouse_left,
     mouse_right,

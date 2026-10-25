@@ -102,6 +102,10 @@ fn buttonFromSokolKeycode(keycode: sokol.app.Keycode) ?input.Button {
     return switch (keycode) {
         .A, .B, .C, .D, .E, .F, .G, .H, .I, .J, .K, .L, .M, .N, .O, .P, .Q, .R, .S, .T, .U, .V, .W, .X, .Y, .Z => @fromBackingInt(@as(u8, @intCast(@backingInt(keycode) - @backingInt(sokol.app.Keycode.A))) + @backingInt(input.Button.key_a)),
         ._0, ._1, ._2, ._3, ._4, ._5, ._6, ._7, ._8, ._9 => @fromBackingInt(@as(u8, @intCast(@backingInt(keycode) - @backingInt(sokol.app.Keycode._0))) + @backingInt(input.Button.key_0)),
+        .LEFT => .key_left,
+        .RIGHT => .key_right,
+        .UP => .key_up,
+        .DOWN => .key_down,
         else => null,
     };
 }
