@@ -31,6 +31,7 @@ pub fn run(comptime T: type, init: std.process.Init) void {
         }
 
         fn sokolCleanup() callconv(.c) void {
+            state.deinit(gpa);
             sokol.gfx.shutdown();
         }
 
