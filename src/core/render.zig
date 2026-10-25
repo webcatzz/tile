@@ -32,7 +32,7 @@ pub const Palette = struct {
         sokol.gfx.destroyView(self._gpu_view);
 
         if (builtin.optimize.runtimeSafety())
-            self._gpu_view = sokol.gfx.invalid_id;
+            self._gpu_view = .{ .id = sokol.gfx.invalid_id };
     }
 };
 
@@ -44,7 +44,7 @@ pub const Sheet = struct {
         sokol.gfx.destroyView(self._gpu_view);
 
         if (builtin.optimize.runtimeSafety())
-            self._gpu_view = sokol.gfx.invalid_id;
+            self._gpu_view = .{ .id = sokol.gfx.invalid_id };
     }
 
     pub fn load(gpa: std.mem.Allocator, io: std.Io, name: []const u8) !Sheet {
@@ -93,6 +93,8 @@ pub const Queue = struct {
     _gpu_sampler: sokol.gfx.Sampler,
     _gpu_pipeline: sokol.gfx.Pipeline,
 
+    _current_gpu_view: sokol.gfx.View,
+
     /// Returns a new rendering queue.
     ///
     /// The queue is owned by the caller and should be freed by calling
@@ -123,6 +125,8 @@ pub const Queue = struct {
             ._gpu_vtx_buf = vtx_buf,
             ._gpu_sampler = sampler,
             ._gpu_pipeline = pipeline,
+
+            ._current_gpu_view = .{ .id = sokol.gfx.invalid_id },
         };
     }
 
@@ -145,6 +149,8 @@ pub const Queue = struct {
 
     /// Sets the spritesheet used for subsequent drawing operations.
     pub fn switchSheet(self: *Queue, sheet: Sheet) !void {
+        if (std.meta.eql(sheet._gpu_view, self._current_gpu_view)) return;
+        self._current_gpu_view = sheet._gpu_view;
         try self.cmd_buf.append(loop.gpa, .{ .switch_sheet = sheet._gpu_view });
     }
 
@@ -160,8 +166,13 @@ pub const Queue = struct {
             sokol.gfx.destroyBuffer(self._gpu_vtx_buf);
             self._gpu_vtx_buf = gpu_vtx_buf;
         }
-
         try self.vtx_buf.appendSlice(loop.gpa, vertices);
+
+        if (self.cmd_buf.lastPtr()) |last_cmd|
+            if (last_cmd.* == .draw) {
+                last_cmd.draw += @intCast(vertices.len);
+                return;
+            };
         try self.cmd_buf.append(loop.gpa, .{ .draw = @intCast(vertices.len) });
     }
 
@@ -199,7 +210,15 @@ pub const Queue = struct {
             .dst = .{ .buffer = self._gpu_vtx_buf },
         });
 
-        sokol.gfx.beginPass(.{ .swapchain = sokol.glue.swapchain() });
+        sokol.gfx.beginPass(.{
+            .swapchain = sokol.glue.swapchain(),
+            .action = init: {
+                var pass_action: sokol.gfx.PassAction = .{};
+                pass_action.colors[0].load_action = .CLEAR;
+                pass_action.colors[0].clear_value = .{ .r = 0, .g = 0, .b = 0, .a = 1 };
+                break :init pass_action;
+            },
+        });
         sokol.gfx.applyPipeline(self._gpu_pipeline);
 
         var bindings: sokol.gfx.Bindings = .{};
@@ -229,6 +248,10 @@ pub const Queue = struct {
 
         sokol.gfx.endPass();
         sokol.gfx.commit();
+
+        self.cmd_buf.clearRetainingCapacity();
+        self.vtx_buf.clearRetainingCapacity();
+        self._current_gpu_view = .{ .id = sokol.gfx.invalid_id };
     }
 };
 
