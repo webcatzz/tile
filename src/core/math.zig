@@ -24,6 +24,64 @@ pub fn Vec2(comptime T: type) type {
         pub fn all(v: T) Vec2(T) {
             return .{ .x = v, .y = v };
         }
+
+        // Arithmetic
+
+        /// Adds the given vectors, component-wise.
+        pub fn add(self: Vec2(T), other: Vec2(T)) Vec2(T) {
+            return .{ .x = self.x + other.x, .y = self.y + other.y };
+        }
+
+        /// Subtracts `other` from `self`, component-wise.
+        pub fn sub(self: Vec2(T), other: Vec2(T)) Vec2(T) {
+            return .{ .x = self.x - other.x, .y = self.y - other.y };
+        }
+
+        /// Multiplies the given vectors, component-wise.
+        pub fn mul(self: Vec2(T), other: Vec2(T)) Vec2(T) {
+            return .{ .x = self.x * other.x, .y = self.y * other.y };
+        }
+
+        /// Divides `self` by `other`, component-wise.
+        pub fn div(self: Vec2(T), other: Vec2(T)) Vec2(T) {
+            return .{ .x = self.x / other.x, .y = self.y / other.y };
+        }
+
+        /// Adds the given vectors in place, component-wise.
+        pub fn add_assign(self: *Vec2(T), other: Vec2(T)) void {
+            self.x += other.x;
+            self.y += other.y;
+        }
+
+        /// Subtracts `other` from `self` in place, component-wise.
+        pub fn sub_assign(self: *Vec2(T), other: Vec2(T)) void {
+            self.x -= other.x;
+            self.y -= other.y;
+        }
+
+        /// Multiplies the given vectors in place, component-wise.
+        pub fn mul_assign(self: *Vec2(T), other: Vec2(T)) void {
+            self.x *= other.x;
+            self.y *= other.y;
+        }
+
+        /// Divides `self` by `other` in place, component-wise.
+        pub fn div_assign(self: *Vec2(T), other: Vec2(T)) void {
+            self.x /= other.x;
+            self.y /= other.y;
+        }
+
+        // Casting
+
+        /// Coerces the components of the vector to the given type.
+        pub fn coerce(self: Vec2(T), comptime U: type) Vec2(U) {
+            return .{ .x = self.x, .y = self.y };
+        }
+
+        /// Invokes `@trunc` on the components of the vector.
+        pub fn trunc(self: Vec2(T), comptime U: type) Vec2(U) {
+            return .{ .x = @trunc(self.x), .y = @trunc(self.y) };
+        }
     };
 }
 
@@ -73,3 +131,20 @@ pub fn Color(comptime T: type) type {
         pub const yellow: Color(T) = .{ .r = max_v, .g = max_v, .b = 0, .a = max_v };
     };
 }
+
+pub const Side = enum {
+    left,
+    right,
+    top,
+    bottom,
+
+    /// Returns a unit vector facing the given side.
+    pub fn vector(self: Side, comptime T: type) Vec2(T) {
+        return switch (self) {
+            .left => .left,
+            .right => .right,
+            .top => .up,
+            .bottom => .down,
+        };
+    }
+};
