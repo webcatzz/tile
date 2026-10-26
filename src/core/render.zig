@@ -4,7 +4,7 @@ const builtin = @import("builtin");
 const loop = @import("loop.zig");
 const math = @import("math.zig");
 const Png = @import("../util/Png.zig");
-const shd_desc_basic = @import("shd_desc_basic");
+const shd_basic = @import("shd_basic");
 const sokol = @import("sokol");
 const std = @import("std");
 
@@ -107,14 +107,14 @@ pub const Queue = struct {
 
         const sampler = sokol.gfx.makeSampler(.{});
 
-        const shader = sokol.gfx.makeShader(shd_desc_basic.basicShaderDesc(sokol.gfx.queryBackend()));
+        const shader = sokol.gfx.makeShader(shd_basic.basicShaderDesc(sokol.gfx.queryBackend()));
 
         const pipeline = sokol.gfx.makePipeline(.{
             .shader = shader,
             .layout = init: {
                 var layout: sokol.gfx.VertexLayoutState = .{};
-                layout.attrs[shd_desc_basic.ATTR_basic_vert_pos] = .{ .format = .FLOAT2 };
-                layout.attrs[shd_desc_basic.ATTR_basic_vert_uv] = .{ .format = .FLOAT2 };
+                layout.attrs[shd_basic.ATTR_basic_vert_pos] = .{ .format = .FLOAT2 };
+                layout.attrs[shd_basic.ATTR_basic_vert_uv] = .{ .format = .FLOAT2 };
                 break :init layout;
             },
         });
@@ -223,7 +223,7 @@ pub const Queue = struct {
 
         var bindings: sokol.gfx.Bindings = .{};
         bindings.vertex_buffers[0] = self._gpu_vtx_buf;
-        bindings.samplers[shd_desc_basic.SMP_smp] = self._gpu_sampler;
+        bindings.samplers[shd_basic.SMP_smp] = self._gpu_sampler;
 
         var vtx_i: u32 = 0;
         for (self.cmd_buf.items) |cmd|
@@ -234,14 +234,14 @@ pub const Queue = struct {
                 },
 
                 .switch_scale => |scale| {
-                    sokol.gfx.applyUniforms(shd_desc_basic.UB_vert_uniform, .{
-                        .ptr = &shd_desc_basic.VertUniform{ .scale_mult = .{ scale.x, scale.y } },
-                        .size = @sizeOf(shd_desc_basic.VertUniform),
+                    sokol.gfx.applyUniforms(shd_basic.UB_vert_uniform, .{
+                        .ptr = &shd_basic.VertUniform{ .scale_mult = .{ scale.x, scale.y } },
+                        .size = @sizeOf(shd_basic.VertUniform),
                     });
                 },
 
                 .switch_sheet => |view| {
-                    bindings.views[shd_desc_basic.VIEW_tex] = view;
+                    bindings.views[shd_basic.VIEW_tex] = view;
                     sokol.gfx.applyBindings(bindings);
                 },
             };

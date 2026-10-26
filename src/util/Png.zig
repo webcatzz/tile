@@ -11,7 +11,9 @@ data: []u8,
 ///
 /// Purposefully enforces the following limitations:
 ///
-/// - Images must use an indexed color type.
+/// - Image data should use a bit depth of 8.
+/// - Image data should use the RGBA color type.
+/// - Image data should not be interlaced.
 pub fn read(gpa: std.mem.Allocator, reader: *std.Io.Reader) !Png {
     // Based on the PNG specification, version 1.2
     // https://www.libpng.org/pub/png/spec/1.2/PNG-Contents.html

@@ -1,7 +1,7 @@
-const Ctx = @import("logic/Ctx.zig");
+const Game = @import("game/Game.zig");
 const loop = @import("core/loop.zig");
 const std = @import("std");
 
 pub fn main(init: std.process.Init) void {
-    loop.run(Ctx, init);
+    loop.run(Game, init);
 }

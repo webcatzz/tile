@@ -24,13 +24,20 @@ pub fn build(b: *std.Build) !void {
         },
     });
 
+    const zflecs_dep = b.dependency("zflecs", .{
+        .target = target,
+        .optimize = optimize,
+    });
+    const zflecs_mod = zflecs_dep.module("root");
+
     const mod = b.createModule(.{
         .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
         .imports = &.{
-            .{ .name = "shd_desc_basic", .module = shd_mod },
+            .{ .name = "shd_basic", .module = shd_mod },
             .{ .name = "sokol", .module = sokol_mod },
+            .{ .name = "zflecs", .module = zflecs_mod },
         },
     });
 
