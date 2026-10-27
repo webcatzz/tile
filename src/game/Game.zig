@@ -7,7 +7,7 @@ const input = @import("../core/input.zig");
 const render = @import("../core/render.zig");
 const std = @import("std");
 
-const Ctx = @This();
+const Game = @This();
 
 world: ecs.World,
 action_map: action.Map = .{},
@@ -17,7 +17,7 @@ render_queue: render.Queue,
 const width = 200;
 const height = 150;
 
-pub fn init(gpa: std.mem.Allocator, io: std.Io) !Ctx {
+pub fn init(gpa: std.mem.Allocator, io: std.Io) !Game {
     var world: ecs.World = .init();
     errdefer world.deinit();
 
@@ -43,14 +43,14 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io) !Ctx {
     };
 }
 
-pub fn deinit(self: *Ctx, _: std.mem.Allocator) void {
+pub fn deinit(self: *Game, _: std.mem.Allocator) void {
     self.world.deinit();
     self.sheet.deinit();
     self.render_queue.deinit();
     self.* = undefined;
 }
 
-pub fn iter(self: *Ctx) !void {
+pub fn iter(self: *Game) !void {
     try self.render_queue.switchScale(1 / @as(f32, width), 1 / @as(f32, height));
 
     try self.world.run(cmpt.Sprite.draw, .{ .render_queue = &self.render_queue });
@@ -58,7 +58,7 @@ pub fn iter(self: *Ctx) !void {
     self.render_queue.commit();
 }
 
-pub fn respond(self: *Ctx, comptime event_type: input.event.Type, event: input.event.of(event_type)) !void {
+pub fn respond(self: *Game, comptime event_type: input.event.Type, event: input.event.of(event_type)) !void {
     self.action_map.record(event_type, event);
 
     switch (event_type) {
