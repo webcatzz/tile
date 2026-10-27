@@ -43,7 +43,7 @@ pub fn init(gpa: std.mem.Allocator, io: std.Io) !Game {
     };
 }
 
-pub fn deinit(self: *Game, _: std.mem.Allocator) void {
+pub fn deinit(self: *Game) void {
     self.world.deinit();
     self.sheet.deinit();
     self.render_queue.deinit();

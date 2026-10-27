@@ -8,10 +8,18 @@ const std = @import("std");
 pub var gpa: std.mem.Allocator = undefined;
 pub var io: std.Io = undefined;
 
-/// Runs the game.
+/// Runs the application defined by the given type.
 ///
-/// This function should only be called once and the program should exit once it
-/// returns.
+/// `T` should fulfill the following interface:
+///
+/// ```
+/// fn init(std.mem.Allocator, std.Io) !T
+/// fn deinit(*T) void
+/// fn iter(*T) !void
+/// fn respond(*T, comptime event_type: input.event.Type, input.event.of(event_type)) !void
+/// ```
+///
+/// This function should not be called while another instance is still running.
 pub fn run(comptime T: type, init: std.process.Init) void {
     const impl = struct {
         var state: T = undefined;
@@ -31,7 +39,7 @@ pub fn run(comptime T: type, init: std.process.Init) void {
         }
 
         fn sokolCleanup() callconv(.c) void {
-            state.deinit(gpa);
+            state.deinit();
             sokol.gfx.shutdown();
         }
 
