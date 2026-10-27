@@ -53,7 +53,7 @@ pub const Map = struct {
     }
 
     /// Returns `true` if the given action is active.
-    pub fn is_active(self: Map, action: Action) bool {
+    pub fn isActive(self: Map, action: Action) bool {
         for (self.bindings.get(action)) |binding|
             if (binding) |button|
                 if (self.pressed_buttons.contains(button))
@@ -62,7 +62,7 @@ pub const Map = struct {
     }
 
     /// Returns `true` if the given action was just activated.
-    pub fn was_just_activated(self: Map, action: Action) bool {
+    pub fn wasJustActivated(self: Map, action: Action) bool {
         switch (self.last_event) {
             .button => |button_event| if (button_event.is_pressed)
                 for (self.bindings.get(action)) |binding|
@@ -75,7 +75,7 @@ pub const Map = struct {
     }
 
     /// Returns `true` if the given action was just deactivated.
-    pub fn was_just_deactivated(self: Map, action: Action) bool {
+    pub fn wasJustDeactivated(self: Map, action: Action) bool {
         switch (self.last_event) {
             .button => |button_event| if (!button_event.is_pressed)
                 for (self.bindings.get(action)) |binding|
@@ -90,10 +90,10 @@ pub const Map = struct {
     /// Returns a unit vector based on the state of each of the given actions.
     pub fn vector(self: Map, neg_x: Action, pos_x: Action, neg_y: Action, pos_y: Action) math.Vec2(f32) {
         return .{
-            .x = @as(f32, @floatFromInt(@intFromBool(self.is_active(pos_x)))) -
-                @as(f32, @floatFromInt(@intFromBool(self.is_active(neg_x)))),
-            .y = @as(f32, @floatFromInt(@intFromBool(self.is_active(pos_y)))) -
-                @as(f32, @floatFromInt(@intFromBool(self.is_active(neg_y)))),
+            .x = @as(f32, @floatFromInt(@intFromBool(self.isActive(pos_x)))) -
+                @as(f32, @floatFromInt(@intFromBool(self.isActive(neg_x)))),
+            .y = @as(f32, @floatFromInt(@intFromBool(self.isActive(pos_y)))) -
+                @as(f32, @floatFromInt(@intFromBool(self.isActive(neg_y)))),
         };
     }
 };

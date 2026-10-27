@@ -29,13 +29,13 @@ pub const Leader = struct {
         pos: *cmpt.Pos,
     ) void {
         leader.facing =
-            if (ctx.action_map.is_active(.left))
+            if (ctx.action_map.isActive(.left))
                 .left
-            else if (ctx.action_map.is_active(.right))
+            else if (ctx.action_map.isActive(.right))
                 .right
-            else if (ctx.action_map.is_active(.up))
+            else if (ctx.action_map.isActive(.up))
                 .top
-            else if (ctx.action_map.is_active(.down))
+            else if (ctx.action_map.isActive(.down))
                 .bottom
             else
                 return;

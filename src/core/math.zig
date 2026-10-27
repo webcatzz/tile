@@ -48,25 +48,25 @@ pub fn Vec2(comptime T: type) type {
         }
 
         /// Adds the given vectors in place, component-wise.
-        pub fn add_assign(self: *Vec2(T), other: Vec2(T)) void {
+        pub fn addAssign(self: *Vec2(T), other: Vec2(T)) void {
             self.x += other.x;
             self.y += other.y;
         }
 
         /// Subtracts `other` from `self` in place, component-wise.
-        pub fn sub_assign(self: *Vec2(T), other: Vec2(T)) void {
+        pub fn subAssign(self: *Vec2(T), other: Vec2(T)) void {
             self.x -= other.x;
             self.y -= other.y;
         }
 
         /// Multiplies the given vectors in place, component-wise.
-        pub fn mul_assign(self: *Vec2(T), other: Vec2(T)) void {
+        pub fn mulAssign(self: *Vec2(T), other: Vec2(T)) void {
             self.x *= other.x;
             self.y *= other.y;
         }
 
         /// Divides `self` by `other` in place, component-wise.
-        pub fn div_assign(self: *Vec2(T), other: Vec2(T)) void {
+        pub fn divAssign(self: *Vec2(T), other: Vec2(T)) void {
             self.x /= other.x;
             self.y /= other.y;
         }

@@ -1,4 +1,4 @@
-//! User input.
+//! Data structures for representing user input.
 
 const math = @import("math.zig");
 
