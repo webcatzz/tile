@@ -138,7 +138,7 @@ pub const Side = enum {
     top,
     bottom,
 
-    /// Returns a unit vector facing the given side.
+    /// Returns a unit vector oriented toward the given side.
     pub fn vector(self: Side, comptime T: type) Vec2(T) {
         return switch (self) {
             .left => .left,

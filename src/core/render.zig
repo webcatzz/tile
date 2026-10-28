@@ -148,6 +148,9 @@ pub const Queue = struct {
     }
 
     /// Sets the spritesheet used for subsequent drawing operations.
+    ///
+    /// If `sheet` is already the current spritesheet, this function does
+    /// nothing.
     pub fn switchSheet(self: *Queue, sheet: Sheet) !void {
         if (std.meta.eql(sheet._gpu_view, self._current_gpu_view)) return;
         self._current_gpu_view = sheet._gpu_view;
