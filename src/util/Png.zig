@@ -56,10 +56,18 @@ pub fn read(gpa: std.mem.Allocator, reader: *std.Io.Reader) !Png {
         return error.UnsupportedPngInterlaceMethod;
     }
 
-    // Reads following PNG chunks
+    // Sets up decompression buffers
 
-    var compressed_data = try gpa.alloc(u8, 0);
-    defer gpa.free(compressed_data);
+    const bytes_per_pixel = 4;
+    const bytes_per_row = width * bytes_per_pixel;
+    const bytes_per_scanline = bytes_per_row + 1;
+
+    var data = try gpa.alloc(u8, bytes_per_scanline * height);
+    errdefer gpa.free(data);
+
+    var data_writer: std.Io.Writer = .fixed(data);
+
+    // Reads following PNG chunks
 
     while (true) {
         try reader.readSliceAll(buf[0..8]);
@@ -67,70 +75,60 @@ pub fn read(gpa: std.mem.Allocator, reader: *std.Io.Reader) !Png {
         const chunk_type = std.mem.readInt(u32, buf[4..8], .big);
 
         switch (chunk_type) {
-            std.mem.readInt(u32, "IEND", .big) => break,
             std.mem.readInt(u32, "IDAT", .big) => {
-                const old_len = compressed_data.len;
-                compressed_data = try gpa.realloc(compressed_data, old_len + chunk_len);
-                try reader.readSliceAll(compressed_data[old_len..]);
+                var decompress_buf: [std.compress.flate.max_window_len]u8 = undefined;
+                var decompressor: std.compress.flate.Decompress = .init(reader, .zlib, &decompress_buf);
+                _ = try decompressor.reader.streamRemaining(&data_writer);
             },
+
+            std.mem.readInt(u32, "IEND", .big) => break,
+
             else => if (std.ascii.isUpper(buf[4])) {
                 std.log.err("Unknown critical PNG chunk: {s}", .{buf[4..8]});
                 return error.UnknownCriticalPngChunk;
-            } else try reader.discardAll(chunk_len),
+            } else {
+                try reader.discardAll(chunk_len);
+            },
         }
 
         try reader.discardAll(4); // Discards CRC
     }
-
-    // Decompresses image data
-
-    const bytes_per_pixel = 4;
-    const bytes_per_row = width * bytes_per_pixel;
-    const bytes_per_scanline = bytes_per_row + 1;
-
-    var decompressed_data = try gpa.alloc(u8, bytes_per_scanline * height);
-    errdefer gpa.free(decompressed_data);
-
-    var compressed_data_reader = std.Io.Reader.fixed(compressed_data);
-    var decompress_buf: [std.compress.flate.max_window_len]u8 = undefined;
-    var decompressor: std.compress.flate.Decompress = .init(&compressed_data_reader, .zlib, &decompress_buf);
-    try decompressor.reader.readSliceAll(decompressed_data);
 
     // Reverses per-scanline filters
 
     for (0..height) |y| {
         const i = y * bytes_per_scanline + 1;
 
-        switch (decompressed_data[i - 1]) {
+        switch (data[i - 1]) {
             0 => {},
             // Sub
             1 => for (bytes_per_pixel..bytes_per_scanline - 1) |x| {
-                decompressed_data[i + x] +%=
-                    decompressed_data[i + x - bytes_per_pixel];
+                data[i + x] +%=
+                    data[i + x - bytes_per_pixel];
             },
             // Up
             2 => if (y > 0) for (0..bytes_per_scanline - 1) |x| {
-                decompressed_data[i + x] +%=
-                    decompressed_data[i + x - bytes_per_scanline];
+                data[i + x] +%=
+                    data[i + x - bytes_per_scanline];
             },
             // Average
             3 => for (0..bytes_per_scanline - 1) |x| {
-                decompressed_data[i + x] +%=
-                    ((if (x < bytes_per_pixel) 0 else decompressed_data[i + x - bytes_per_pixel]) +
-                        (if (y == 0) 0 else decompressed_data[i + x - bytes_per_scanline])) / 2;
+                data[i + x] +%=
+                    ((if (x < bytes_per_pixel) 0 else data[i + x - bytes_per_pixel]) +
+                        (if (y == 0) 0 else data[i + x - bytes_per_scanline])) / 2;
             },
             // Paeth
             4 => for (0..bytes_per_scanline - 1) |x| {
-                const a = if (x < bytes_per_pixel) 0 else decompressed_data[i + x - bytes_per_pixel];
-                const b = if (y == 0) 0 else decompressed_data[i + x - bytes_per_scanline];
-                const c = if (x < bytes_per_pixel or y == 0) 0 else decompressed_data[i + x - bytes_per_scanline - bytes_per_pixel];
+                const a = if (x < bytes_per_pixel) 0 else data[i + x - bytes_per_pixel];
+                const b = if (y == 0) 0 else data[i + x - bytes_per_scanline];
+                const c = if (x < bytes_per_pixel or y == 0) 0 else data[i + x - bytes_per_scanline - bytes_per_pixel];
 
                 const p = @as(i32, a) + b - c;
                 const pa = @abs(p - a);
                 const pb = @abs(p - b);
                 const pc = @abs(p - c);
 
-                decompressed_data[i + x] +%= if (pa <= pb and pa <= pc) a else if (pb <= pc) b else c;
+                data[i + x] +%= if (pa <= pb and pa <= pc) a else if (pb <= pc) b else c;
             },
 
             else => |filter_type| {
@@ -144,16 +142,16 @@ pub fn read(gpa: std.mem.Allocator, reader: *std.Io.Reader) !Png {
 
     for (0..height) |y|
         @memmove(
-            decompressed_data[y * bytes_per_row ..][0..bytes_per_row],
-            decompressed_data[y * bytes_per_scanline + 1 ..][0..bytes_per_row],
+            data[y * bytes_per_row ..][0..bytes_per_row],
+            data[y * bytes_per_scanline + 1 ..][0..bytes_per_row],
         );
-    decompressed_data = try gpa.realloc(decompressed_data, decompressed_data.len - height);
+    data = try gpa.realloc(data, data.len - height);
 
     // Returns
 
     return .{
         .width = width,
         .height = height,
-        .data = decompressed_data,
+        .data = data,
     };
 }
