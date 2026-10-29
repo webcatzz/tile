@@ -1,6 +1,5 @@
 //! Rendering.
 
-const builtin = @import("builtin");
 const loop = @import("loop.zig");
 const math = @import("math.zig");
 const Png = @import("../util/Png.zig");
@@ -30,21 +29,17 @@ pub const Palette = struct {
 
     pub fn deinit(self: *Palette) void {
         sokol.gfx.destroyView(self._gpu_view);
-
-        if (builtin.optimize.runtimeSafety())
-            self._gpu_view = .{ .id = sokol.gfx.invalid_id };
     }
 };
 
 /// A spritesheet.
 pub const Sheet = struct {
+    _gpu_img: sokol.gfx.Image,
     _gpu_view: sokol.gfx.View,
 
     pub fn deinit(self: *Sheet) void {
+        sokol.gfx.destroyImage(self._gpu_img);
         sokol.gfx.destroyView(self._gpu_view);
-
-        if (builtin.optimize.runtimeSafety())
-            self._gpu_view = .{ .id = sokol.gfx.invalid_id };
     }
 
     pub fn load(gpa: std.mem.Allocator, io: std.Io, name: []const u8) !Sheet {
@@ -81,7 +76,10 @@ pub const Sheet = struct {
             .texture = .{ .image = gpu_img },
         });
 
-        return .{ ._gpu_view = gpu_view };
+        return .{
+            ._gpu_img = gpu_img,
+            ._gpu_view = gpu_view,
+        };
     }
 };
 
